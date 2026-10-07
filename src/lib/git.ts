@@ -169,31 +169,19 @@ export function getOtherBranches(dir: string) {
     const git = openRepo(dir)
     const output = await git.raw([
       'for-each-ref',
-      '--format=%(HEAD)%09%(refname:short)%09%(upstream:short)',
+      '--format=%(HEAD)%09%(refname:short)',
       'refs/heads',
     ])
     const lines = output.split('\n').filter((line) => line !== '')
-    const current = lines.find((line) => line.startsWith('*'))
-    if (current === undefined) {
+    if (!lines.some((line) => line.startsWith('*'))) {
       throw new Error('Not on a branch')
     }
-    const remoteOutput = await git.raw([
-      'for-each-ref',
-      '--format=%(refname:short)%09%(symref)',
-      'refs/remotes',
-    ])
+    const pruned = await git.fetch({ '--prune': null, '--dry-run': null })
     return {
       branches: lines
         .filter((line) => !line.startsWith('*'))
         .map((line) => line.split('\t')[1]),
-      remoteBranches: remoteOutput
-        .split('\n')
-        .filter((line) => line !== '')
-        .map((line) => line.split('\t'))
-        .filter(
-          ([name, symref]) => symref === '' && name !== current.split('\t')[2]
-        )
-        .map(([name]) => name),
+      remoteBranches: pruned.deleted.map((entry) => entry.tracking),
     }
   })
 }

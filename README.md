@@ -46,7 +46,7 @@ An action applies to one of these:
 | `P`       | Push. If the branch has no upstream, manygit sets it.      |
 | `c`       | Change to a different branch.                              |
 | `C`       | Make a new branch and change to it.                        |
-| `X`       | Delete all the local branches, but not the current branch. |
+| `X`       | Delete all the local branches except current branch.       |
 | `o`       | Make or merge a pull request. AI writes the text.          |
 | `R`       | Publish a GitHub release. AI writes the release notes.     |
 | `w`       | Open the remote in the browser.                            |

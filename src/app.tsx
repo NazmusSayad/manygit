@@ -235,7 +235,7 @@ export function App(props: { root: string; storeDir: string }) {
       for (const entry of found) {
         if (entry !== null) {
           patchRepo(entry.repoPath, {
-            error: 'No other branches to delete',
+            error: 'No other local or deleted remote branches to delete',
           })
         }
       }
@@ -255,8 +255,8 @@ export function App(props: { root: string; storeDir: string }) {
       danger: true,
       message:
         targets.length === 1
-          ? `Force delete ${count} local branches and ${remoteCount} remote branch copies in ${repoName(props.root, targets[0])}? Unmerged work on them is lost. Nothing on the remote changes.`
-          : `Force delete ${count} local branches and ${remoteCount} remote branch copies in ${deletable.length} repos? Unmerged work on them is lost. Nothing on the remote changes.`,
+          ? `Force delete ${count} local branches and ${remoteCount} branches deleted on the remote in ${repoName(props.root, targets[0])}? Unmerged work on them is lost. Nothing on the remote changes.`
+          : `Force delete ${count} local branches and ${remoteCount} branches deleted on the remote in ${deletable.length} repos? Unmerged work on them is lost. Nothing on the remote changes.`,
       list: deletable.flatMap((entry) =>
         targets.length === 1
           ? [...entry.branches, ...entry.remoteBranches].map(
