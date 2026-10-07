@@ -505,7 +505,7 @@ export function App(props: { root: string; storeDir: string }) {
   ) {
     return step(id, repoPath, async () => {
       setWorking(id, repoPath, `merging PR #${number}…`)
-      await session.merge(number, session.mergeMethod)
+      await session.merge()
       patchEntry(id, repoPath, {
         state: 'done',
         text: `${doneText} PR #${number}`,
@@ -553,7 +553,7 @@ export function App(props: { root: string; storeDir: string }) {
               run: () =>
                 void step(id, repoPath, async () => {
                   setWorking(id, repoPath, `releasing ${draft.tag}…`)
-                  await draft.create(notes)
+                  await draft.create(notes, { replace: draft.exists })
                   patchEntry(id, repoPath, {
                     state: 'done',
                     text: `released ${draft.tag}`,
