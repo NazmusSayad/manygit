@@ -193,7 +193,7 @@ export function runAction(dir: string, action: RepoAction) {
 
 async function perform(git: SimpleGit, action: RepoAction): Promise<void> {
   if (action.kind === 'fetch') {
-    await git.fetch()
+    await git.fetch({ '--prune': null })
     return
   }
 
@@ -222,7 +222,7 @@ async function perform(git: SimpleGit, action: RepoAction): Promise<void> {
   }
 
   if (action.kind === 'delete-branches') {
-    await git.raw(['prune', '--progress'])
+    await git.fetch({ '--prune': null })
     await git.raw(['branch', '-D', ...action.branches])
     return
   }
