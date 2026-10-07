@@ -1,14 +1,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import type { SortMode } from './app'
+import { SORT_MODES, type SortMode } from './sort'
 
 type State = {
   selections: Record<string, string[]>
   sorts: Record<string, SortMode>
   cursors: Record<string, string>
 }
-
-const SORT_MODES: SortMode[] = ['name', 'path', 'last-commit', 'last-change']
 
 export function loadSelection(storeDir: string, root: string) {
   return new Set(readState(storeDir).selections[root] ?? [])

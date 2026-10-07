@@ -5,7 +5,6 @@ import pLimit from 'p-limit'
 import { simpleGit, type SimpleGit } from 'simple-git'
 
 const limit = pLimit(8)
-const generateLimit = pLimit(4)
 
 export type RepoAction =
   | { kind: 'fetch' }
@@ -41,6 +40,14 @@ export type RepoSummary = {
     staged: boolean
     untracked: boolean
   }
+}
+
+export type Activity = 'loading' | RepoAction['kind']
+
+export type RepoState = {
+  summary: RepoSummary | null
+  activity: Activity | null
+  error: string | null
 }
 
 export type RepoDetails = {
@@ -172,12 +179,6 @@ export function getOtherBranches(dir: string) {
       .filter((line) => !line.startsWith('*'))
       .map((line) => line.split('\t')[1])
   })
-}
-
-export function withGityo<T>(
-  task: (gityo: typeof import('gityo')) => Promise<T>
-) {
-  return generateLimit(async () => task(await import('gityo')))
 }
 
 export function runAction(dir: string, action: RepoAction) {

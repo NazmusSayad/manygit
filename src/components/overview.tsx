@@ -1,6 +1,6 @@
 import { Box, Text } from 'ink'
-import type { RepoState } from './app'
-import { displayPath, repoName } from './format'
+import { displayPath, repoName } from '../lib/format'
+import type { RepoState } from '../lib/git'
 
 export function Overview(props: {
   root: string

@@ -1,8 +1,8 @@
 import { Box, Text } from 'ink'
 import { useEffect, useState } from 'react'
-import type { RepoState, SortMode } from './app'
-import { repoName } from './format'
-import type { RepoSummary } from './git'
+import { repoName } from '../lib/format'
+import type { RepoState, RepoSummary } from '../lib/git'
+import type { SortMode } from '../lib/sort'
 
 const SORT_LABELS = {
   name: 'name',

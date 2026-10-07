@@ -2,6 +2,13 @@ import type { RepoAction } from './git'
 
 export type Fix = { label: string; danger: boolean; action: RepoAction }
 
+export type Issue = {
+  repoPath: string
+  problem: string
+  fixes: Fix[]
+  choice: number
+}
+
 export function getFixes(action: RepoAction, message: string) {
   const problems: { problem: string; fixes: Fix[] }[] = []
 

@@ -1,7 +1,6 @@
 import { Box, Text } from 'ink'
-import type { RepoState } from './app'
-import { displayPath, formatAge } from './format'
-import type { RepoDetails } from './git'
+import { displayPath, formatAge } from '../lib/format'
+import type { RepoDetails, RepoState } from '../lib/git'
 import { BranchStatus } from './sidebar'
 
 const ACTIVITY_LABELS = {
