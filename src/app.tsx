@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type { CommitSession, PullRequestSession, ReleaseDraft } from 'gityo'
 import { Box, Text, useApp, useInput, useWindowSize } from 'ink'
 import { useEffect, useState } from 'react'
@@ -20,8 +21,10 @@ import { Overview } from './overview'
 import { RepoDetailsPane } from './repo-details'
 import { Sidebar } from './sidebar'
 import {
+  loadCursor,
   loadSelection,
   loadSortMode,
+  saveCursor,
   saveSelection,
   saveSortMode,
 } from './state'
@@ -35,7 +38,7 @@ export type RepoState = {
   error: string | null
 }
 
-export type SortMode = 'name' | 'last-commit' | 'last-change'
+export type SortMode = 'name' | 'path' | 'last-commit' | 'last-change'
 
 type Mode =
   | { kind: 'browse' }
@@ -60,7 +63,7 @@ type Mode =
       value: string
     }
 
-const SORT_MODES: SortMode[] = ['name', 'last-commit', 'last-change']
+const SORT_MODES: SortMode[] = ['name', 'path', 'last-commit', 'last-change']
 
 const RELEASE_CHOICES = [
   { label: 'Patch', bump: 'patch' },
@@ -93,7 +96,9 @@ export function App(props: { root: string; storeDir: string }) {
   const [sortMode, setSortMode] = useState(() =>
     loadSortMode(props.storeDir, props.root)
   )
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
+  const [selectedPath, setSelectedPath] = useState<string | null>(() =>
+    loadCursor(props.storeDir, props.root)
+  )
   const [mode, setMode] = useState<Mode>({ kind: 'browse' })
   const [marked, setMarked] = useState(() =>
     loadSelection(props.storeDir, props.root)
@@ -581,6 +586,9 @@ export function App(props: { root: string; storeDir: string }) {
         (previous) =>
           new Set([...previous].filter((repoPath) => found.includes(repoPath)))
       )
+      setSelectedPath((previous) =>
+        previous !== null && found.includes(previous) ? previous : null
+      )
       await Promise.all(found.map((repoPath) => run(repoPath, null)))
     })()
   }, [props.root])
@@ -588,6 +596,10 @@ export function App(props: { root: string; storeDir: string }) {
   useEffect(() => {
     saveSelection(props.storeDir, props.root, marked)
   }, [props.storeDir, props.root, marked])
+
+  useEffect(() => {
+    saveCursor(props.storeDir, props.root, selectedPath)
+  }, [props.storeDir, props.root, selectedPath])
 
   useEffect(() => {
     saveSortMode(props.storeDir, props.root, sortMode)
@@ -1021,8 +1033,7 @@ export function App(props: { root: string; storeDir: string }) {
     }
     if (key.escape) {
       if (marked.size > 0) setMarked(new Set())
-      else if (selectedPath === null) app.exit()
-      else setSelectedPath(null)
+      else if (selectedPath !== null) setSelectedPath(null)
       return
     }
     if (key.upArrow || input === 'k') {
@@ -1338,15 +1349,21 @@ export function App(props: { root: string; storeDir: string }) {
       )}
       {mode.kind === 'browse' && !issue && !wizard && (
         <Box justifyContent="space-between" gap={2}>
-          <Text dimColor wrap="truncate-end">
+          <Text wrap="truncate-end">
             {markedPaths.length > 0 && (
               <Text color="green">{` ${markedPaths.length} selected:`}</Text>
             )}
-            {markedPaths.length === 0 && selectedPath === null && ' All repos:'}
-            {markedPaths.length > 0 && ' Clear (esc)'}
-            {markedPaths.length === 0 && selectedPath === null && ' Quit (esc)'}
-            {markedPaths.length === 0 && selectedPath !== null && ' Back (esc)'}
-            {' · Move (↑↓) · Select (space)'}
+            <Text dimColor>
+              {markedPaths.length === 0 &&
+                selectedPath === null &&
+                ' All repos:'}
+              {markedPaths.length > 0 && ' Clear (esc)'}
+              {markedPaths.length === 0 && selectedPath === null && ' Quit (q)'}
+              {markedPaths.length === 0 &&
+                selectedPath !== null &&
+                ' Back (esc)'}
+              {' · Move (↑↓) · Select (space)'}
+            </Text>
           </Text>
           <Box flexShrink={0}>
             <Text dimColor>Help (?) </Text>
@@ -1365,7 +1382,10 @@ function sortRepos(
 ) {
   return [...paths].sort((a, b) => {
     const byName = repoName(root, a).localeCompare(repoName(root, b))
-    if (sortMode === 'name') return byName
+    if (sortMode === 'path') return byName
+    if (sortMode === 'name') {
+      return path.basename(a).localeCompare(path.basename(b)) || byName
+    }
     if (sortMode === 'last-commit') {
       const aTime = repos[a]?.summary?.lastCommitAt ?? 0
       const bTime = repos[b]?.summary?.lastCommitAt ?? 0

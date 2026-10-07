@@ -18,7 +18,7 @@
   "dependencies": {
     "@commander-js/extra-typings": "^15.0.0",
     "commander": "^15.0.0",
-    "gityo": "link:../gityo",
+    "gityo": "^1.1.9",
     "ink": "^8.0.0",
     "p-limit": "^7.3.3",
     "react": "^19.3.0",

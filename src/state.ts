@@ -5,9 +5,10 @@ import type { SortMode } from './app'
 type State = {
   selections: Record<string, string[]>
   sorts: Record<string, SortMode>
+  cursors: Record<string, string>
 }
 
-const SORT_MODES: SortMode[] = ['name', 'last-commit', 'last-change']
+const SORT_MODES: SortMode[] = ['name', 'path', 'last-commit', 'last-change']
 
 export function loadSelection(storeDir: string, root: string) {
   return new Set(readState(storeDir).selections[root] ?? [])
@@ -40,6 +41,23 @@ export function saveSortMode(
   writeState(storeDir, state)
 }
 
+export function loadCursor(storeDir: string, root: string) {
+  return readState(storeDir).cursors[root] ?? null
+}
+
+export function saveCursor(
+  storeDir: string,
+  root: string,
+  repoPath: string | null
+) {
+  const state = readState(storeDir)
+
+  if (repoPath === null) delete state.cursors[root]
+  else state.cursors[root] = repoPath
+
+  writeState(storeDir, state)
+}
+
 function writeState(storeDir: string, state: State) {
   fs.mkdirSync(storeDir, { recursive: true })
   fs.writeFileSync(stateFile(storeDir), `${JSON.stringify(state, null, 2)}\n`)
@@ -51,7 +69,7 @@ function stateFile(storeDir: string) {
 
 function readState(storeDir: string): State {
   const file = stateFile(storeDir)
-  if (!fs.existsSync(file)) return { selections: {}, sorts: {} }
+  if (!fs.existsSync(file)) return { selections: {}, sorts: {}, cursors: {} }
 
   let state: Partial<State>
   try {
@@ -68,5 +86,9 @@ function readState(storeDir: string): State {
       throw new Error(`Invalid sort mode '${sortMode}' in state file ${file}`)
     }
   }
-  return { selections: state.selections ?? {}, sorts }
+  return {
+    selections: state.selections ?? {},
+    sorts,
+    cursors: state.cursors ?? {},
+  }
 }

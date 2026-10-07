@@ -6,6 +6,7 @@ import type { RepoSummary } from './git'
 
 const SORT_LABELS = {
   name: 'name',
+  path: 'path',
   'last-commit': 'recent commit',
   'last-change': 'recent change',
 }
