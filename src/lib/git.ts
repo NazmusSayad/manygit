@@ -64,7 +64,7 @@ export type RepoDetails = {
 
 export function getSummary(dir: string) {
   return limit(async (): Promise<RepoSummary> => {
-    const git = simpleGit(dir)
+    const git = openRepo(dir)
     const status = await git.status()
     const lastCommit = await git.raw([
       'log',
@@ -121,7 +121,7 @@ export function getSummary(dir: string) {
 
 export function getDetails(dir: string) {
   return limit(async (): Promise<RepoDetails> => {
-    const git = simpleGit(dir)
+    const git = openRepo(dir)
     const status = await git.status()
     const branchOutput = await git.raw([
       'for-each-ref',
@@ -166,7 +166,7 @@ export function getDetails(dir: string) {
 
 export function getOtherBranches(dir: string) {
   return limit(async () => {
-    const output = await simpleGit(dir).raw([
+    const output = await openRepo(dir).raw([
       'for-each-ref',
       '--format=%(HEAD)%09%(refname:short)',
       'refs/heads',
@@ -181,8 +181,14 @@ export function getOtherBranches(dir: string) {
   })
 }
 
+function openRepo(dir: string) {
+  return simpleGit(dir, {
+    allowEnvironment: ['GIT_TERMINAL_PROMPT', 'GIT_SSH_COMMAND'],
+  })
+}
+
 export function runAction(dir: string, action: RepoAction) {
-  return limit(() => perform(simpleGit(dir), action))
+  return limit(() => perform(openRepo(dir), action))
 }
 
 async function perform(git: SimpleGit, action: RepoAction): Promise<void> {
