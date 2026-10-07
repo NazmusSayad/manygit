@@ -34,5 +34,9 @@
     "tslib": "^2",
     "tsx": "^4",
     "typescript": "^5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NazmusSayad/manygit.git"
   }
 }
