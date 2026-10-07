@@ -17,6 +17,7 @@ export default defineConfig({
   deps: {
     neverBundle: [
       /node:/gim,
+      'react-devtools-core',
       ...getExternal((packageJSON as any).dependencies),
     ],
   },

@@ -7,35 +7,19 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
       '@commander-js/extra-typings':
         specifier: ^15.0.0
         version: 15.0.0(commander@15.0.0)
-      commander:
-        specifier: ^15.0.0
-        version: 15.0.0
-      gityo:
-        specifier: ^1.1.9
-        version: 1.1.9
-      ink:
-        specifier: ^8.0.0
-        version: 8.0.0(@types/react@19.3.0)(react@19.3.0)
-      p-limit:
-        specifier: ^7.3.3
-        version: 7.3.3
-      react:
-        specifier: ^19.3.0
-        version: 19.3.0
-      simple-git:
-        specifier: ^4.0.2
-        version: 4.0.2(supports-color@10.2.2)
-    devDependencies:
       '@types/node':
         specifier: ^25
         version: 25.9.9
       '@types/react':
         specifier: ^19.3.0
         version: 19.3.0
+      commander:
+        specifier: ^15.0.0
+        version: 15.0.0
       concurrently:
         specifier: ^10
         version: 10.0.5
@@ -45,9 +29,15 @@ importers:
       eslint-plugin-oxfmt:
         specifier: ^0.25.0
         version: 0.25.0(eslint@10.12.0(jiti@2.7.0)(supports-color@10.2.2))(oxfmt@0.71.0)
+      gityo:
+        specifier: ^1.1.9
+        version: 1.1.9
       husky:
         specifier: ^9
         version: 9.1.7
+      ink:
+        specifier: ^8.0.0
+        version: 8.0.0(@types/react@19.3.0)(react@19.3.0)
       lint-staged:
         specifier: ^17.6.0
         version: 17.6.0
@@ -60,6 +50,15 @@ importers:
       oxlint-tsgolint:
         specifier: ^7.0.2003
         version: 7.0.2003
+      p-limit:
+        specifier: ^7.3.3
+        version: 7.3.3
+      react:
+        specifier: ^19.3.0
+        version: 19.3.0
+      simple-git:
+        specifier: ^4.0.2
+        version: 4.0.2(supports-color@10.2.2)
       tsdown:
         specifier: ^0
         version: 0.23.0(tsx@4.23.15)(typescript@5.9.3)

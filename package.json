@@ -15,26 +15,24 @@
   "bin": {
     "manygit": "dist/index.mjs"
   },
-  "dependencies": {
-    "@commander-js/extra-typings": "^15.0.0",
-    "commander": "^15.0.0",
-    "gityo": "^1.1.9",
-    "ink": "^8.0.0",
-    "p-limit": "^7.3.3",
-    "react": "^19.3.0",
-    "simple-git": "^4.0.2"
-  },
   "devDependencies": {
+    "@commander-js/extra-typings": "^15.0.0",
     "@types/node": "^25",
     "@types/react": "^19.3.0",
+    "commander": "^15.0.0",
     "concurrently": "^10",
     "eslint-plugin-check-file": "^3",
     "eslint-plugin-oxfmt": "^0.25.0",
+    "gityo": "^1.1.9",
     "husky": "^9",
+    "ink": "^8.0.0",
     "lint-staged": "^17.6.0",
     "oxfmt": "^0.71.0",
     "oxlint": "^1.86.0",
     "oxlint-tsgolint": "^7.0.2003",
+    "p-limit": "^7.3.3",
+    "react": "^19.3.0",
+    "simple-git": "^4.0.2",
     "tsdown": "^0",
     "tslib": "^2",
     "tsx": "^4",
