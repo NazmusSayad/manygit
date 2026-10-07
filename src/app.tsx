@@ -278,11 +278,14 @@ export function App(props: { root: string; storeDir: string }) {
                   repoPath,
                   result.session,
                   result.message,
-                  false
+                  null
                 ),
             },
             {
-              label: 'Commit and push',
+              label:
+                result.session.postCommand === 'push-and-pull'
+                  ? 'Commit, push and pull'
+                  : 'Commit and push',
               danger: false,
               run: () =>
                 void commitChanges(
@@ -290,7 +293,7 @@ export function App(props: { root: string; storeDir: string }) {
                   repoPath,
                   result.session,
                   result.message,
-                  true
+                  result.session.postCommand ?? 'push'
                 ),
             },
             {
@@ -301,7 +304,7 @@ export function App(props: { root: string; storeDir: string }) {
             skipOption(id, repoPath),
           ],
         },
-        0
+        result.session.postCommand === null ? 0 : 1
       )
     })
   }
@@ -311,14 +314,14 @@ export function App(props: { root: string; storeDir: string }) {
     repoPath: string,
     session: CommitSession,
     message: string,
-    shouldPush: boolean
+    postCommand: 'push' | 'push-and-pull' | null
   ) {
     return step(id, repoPath, async () => {
       setWorking(id, repoPath, 'committing…')
       await session.commit(message)
       const summary = await getSummary(repoPath)
       patchRepo(repoPath, { summary })
-      if (!shouldPush) {
+      if (postCommand === null) {
         patchEntry(id, repoPath, { state: 'done', text: 'committed' })
         return
       }
@@ -334,7 +337,22 @@ export function App(props: { root: string; storeDir: string }) {
       if (pushError !== null) {
         throw new Error(`Committed, but push failed: ${pushError}`)
       }
-      patchEntry(id, repoPath, { state: 'done', text: 'committed and pushed' })
+      if (postCommand === 'push') {
+        patchEntry(id, repoPath, {
+          state: 'done',
+          text: 'committed and pushed',
+        })
+        return
+      }
+      setWorking(id, repoPath, 'pulling…')
+      const pullError = await run(repoPath, { kind: 'pull' })
+      if (pullError !== null) {
+        throw new Error(`Committed and pushed, but pull failed: ${pullError}`)
+      }
+      patchEntry(id, repoPath, {
+        state: 'done',
+        text: 'committed, pushed and pulled',
+      })
     })
   }
 
