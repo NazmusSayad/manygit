@@ -4,6 +4,12 @@ import type { RepoState, SortMode } from './app'
 import { repoName } from './format'
 import type { RepoSummary } from './git'
 
+const SORT_LABELS = {
+  name: 'name',
+  'last-commit': 'recent commit',
+  'last-change': 'recent change',
+}
+
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 
 export function Sidebar(props: {
@@ -16,15 +22,6 @@ export function Sidebar(props: {
   width: number
   height: number
 }) {
-  const [frame, setFrame] = useState(0)
-  const isBusy = props.paths.some((repoPath) => props.repos[repoPath]?.activity)
-
-  useEffect(() => {
-    if (!isBusy) return
-    const timer = setInterval(() => setFrame((previous) => previous + 1), 80)
-    return () => clearInterval(timer)
-  }, [isBusy])
-
   const listHeight = Math.max(1, props.height - 3)
   const offset = Math.max(
     0,
@@ -42,20 +39,13 @@ export function Sidebar(props: {
       borderStyle="round"
       borderColor="gray"
     >
-      <Box paddingX={1} gap={1}>
-        <Box flexGrow={1} flexBasis={0}>
-          <Text dimColor wrap="truncate-end">
-            Move (↑↓)
-          </Text>
-        </Box>
+      <Box paddingX={1} justifyContent="space-between" gap={1}>
         <Box flexShrink={0}>
-          <Text dimColor>Select (space)</Text>
+          <Text bold>ManyGit</Text>
         </Box>
-        <Box flexGrow={1} flexBasis={0} justifyContent="flex-end">
-          <Text dimColor wrap="truncate-end">
-            Sort: {props.sortMode === 'name' ? 'name' : 'recent'} (s)
-          </Text>
-        </Box>
+        <Text dimColor wrap="truncate-end">
+          Sort: {SORT_LABELS[props.sortMode]} (s)
+        </Text>
       </Box>
 
       {props.paths.slice(offset, offset + listHeight).map((repoPath, index) => {
@@ -82,9 +72,7 @@ export function Sidebar(props: {
             </Box>
             {state?.activity && (
               <Box flexShrink={0} marginLeft={1}>
-                <Text color="cyan">
-                  {SPINNER_FRAMES[frame % SPINNER_FRAMES.length]}
-                </Text>
+                <Spinner />
               </Box>
             )}
             {!state?.activity && state?.error && (
@@ -119,5 +107,18 @@ export function BranchStatus(props: { summary: RepoSummary }) {
         {props.summary.ahead === 0 && props.summary.behind > 0 && '↓'}
       </Text>
     </>
+  )
+}
+
+export function Spinner() {
+  const [frame, setFrame] = useState(0)
+
+  useEffect(() => {
+    const timer = setInterval(() => setFrame((previous) => previous + 1), 80)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <Text color="cyan">{SPINNER_FRAMES[frame % SPINNER_FRAMES.length]}</Text>
   )
 }

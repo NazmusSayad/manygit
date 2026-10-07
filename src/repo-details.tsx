@@ -15,6 +15,7 @@ const ACTIVITY_LABELS = {
   'pull-merge': 'pulling…',
   'push-force': 'force pushing…',
   sequence: 'fixing…',
+  'open-remote': 'opening in browser…',
   loading: 'refreshing…',
   fetch: 'fetching…',
   pull: 'pulling…',

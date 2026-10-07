@@ -1,7 +1,11 @@
+import { spawn } from 'node:child_process'
+import { stat } from 'node:fs/promises'
+import path from 'node:path'
 import pLimit from 'p-limit'
 import { simpleGit, type SimpleGit } from 'simple-git'
 
 const limit = pLimit(8)
+const generateLimit = pLimit(4)
 
 export type RepoAction =
   | { kind: 'fetch' }
@@ -17,6 +21,7 @@ export type RepoAction =
   | { kind: 'pull-merge' }
   | { kind: 'push-force'; branch: string }
   | { kind: 'sequence'; actions: RepoAction[] }
+  | { kind: 'open-remote' }
 
 export type RepoSummary = {
   branch: string | null
@@ -26,6 +31,7 @@ export type RepoSummary = {
   behind: number
   changes: number
   lastCommitAt: number | null
+  lastChangeAt: number | null
   flags: {
     conflicted: boolean
     stashed: boolean
@@ -63,6 +69,23 @@ export function getSummary(dir: string) {
     const files = status.files.filter(
       (file) => !status.conflicted.includes(file.path)
     )
+    const changeTimes = await Promise.all(
+      status.files.map(async (file) => {
+        try {
+          return (await stat(path.join(dir, file.path))).mtimeMs / 1000
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            'code' in error &&
+            error.code === 'ENOENT'
+          ) {
+            return null
+          }
+          throw error
+        }
+      })
+    )
+    const knownChangeTimes = changeTimes.filter((time) => time !== null)
 
     return {
       branch: status.current,
@@ -72,6 +95,8 @@ export function getSummary(dir: string) {
       behind: status.behind,
       changes: status.files.length,
       lastCommitAt: lastCommit.trim() === '' ? null : Number(lastCommit),
+      lastChangeAt:
+        knownChangeTimes.length === 0 ? null : Math.max(...knownChangeTimes),
       flags: {
         conflicted: status.conflicted.length > 0,
         stashed: stashList.trim() !== '',
@@ -147,6 +172,12 @@ export function getOtherBranches(dir: string) {
       .filter((line) => !line.startsWith('*'))
       .map((line) => line.split('\t')[1])
   })
+}
+
+export function withGityo<T>(
+  task: (gityo: typeof import('gityo')) => Promise<T>
+) {
+  return generateLimit(async () => task(await import('gityo')))
 }
 
 export function runAction(dir: string, action: RepoAction) {
@@ -234,12 +265,57 @@ async function perform(git: SimpleGit, action: RepoAction): Promise<void> {
     return
   }
 
+  if (action.kind === 'open-remote') {
+    const remote = (await git.raw(['remote', 'get-url', 'origin'])).trim()
+    await openInBrowser(toWebUrl(remote))
+    return
+  }
+
   if (action.kind === 'sequence') {
     for (const step of action.actions) await perform(git, step)
     return
   }
 
   throw new Error(`Unknown action: ${JSON.stringify(action)}`)
+}
+
+function toWebUrl(remote: string) {
+  const scpLike = /^[\w.-]+@([^:/]+):(.+?)(?:\.git)?\/?$/.exec(remote)
+  if (scpLike) return `https://${scpLike[1]}/${scpLike[2]}`
+
+  const url =
+    /^(?:https?|ssh|git):\/\/(?:[^@/]+@)?([^/:]+)(?::\d+)?\/(.+?)(?:\.git)?\/?$/.exec(
+      remote
+    )
+  if (url) return `https://${url[1]}/${url[2]}`
+
+  throw new Error(`Origin is not a web URL: ${remote}`)
+}
+
+function openInBrowser(url: string) {
+  const command =
+    process.platform === 'darwin'
+      ? { file: 'open', args: [url] }
+      : process.platform === 'win32'
+        ? { file: 'cmd', args: ['/c', 'start', '', url] }
+        : process.platform === 'linux'
+          ? { file: 'xdg-open', args: [url] }
+          : null
+  if (command === null) {
+    throw new Error(`Opening a browser is not supported on ${process.platform}`)
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const child = spawn(command.file, command.args, {
+      detached: true,
+      stdio: 'ignore',
+    })
+    child.on('error', reject)
+    child.on('spawn', () => {
+      child.unref()
+      resolve()
+    })
+  })
 }
 
 async function getLocalDefaultBranch(git: SimpleGit) {
