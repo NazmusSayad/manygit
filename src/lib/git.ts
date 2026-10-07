@@ -13,7 +13,7 @@ export type RepoAction =
   | { kind: 'checkout'; branch: string }
   | { kind: 'create-branch'; branch: string }
   | { kind: 'checkout-default' }
-  | { kind: 'delete-branches'; branches: string[] }
+  | { kind: 'delete-branches'; branches: string[]; remoteBranches: string[] }
   | { kind: 'stash' }
   | { kind: 'remove-worktree'; worktreePath: string; force: boolean }
   | { kind: 'pull-rebase' }
@@ -166,18 +166,35 @@ export function getDetails(dir: string) {
 
 export function getOtherBranches(dir: string) {
   return limit(async () => {
-    const output = await openRepo(dir).raw([
+    const git = openRepo(dir)
+    const output = await git.raw([
       'for-each-ref',
-      '--format=%(HEAD)%09%(refname:short)',
+      '--format=%(HEAD)%09%(refname:short)%09%(upstream:short)',
       'refs/heads',
     ])
     const lines = output.split('\n').filter((line) => line !== '')
-    if (!lines.some((line) => line.startsWith('*'))) {
+    const current = lines.find((line) => line.startsWith('*'))
+    if (current === undefined) {
       throw new Error('Not on a branch')
     }
-    return lines
-      .filter((line) => !line.startsWith('*'))
-      .map((line) => line.split('\t')[1])
+    const remoteOutput = await git.raw([
+      'for-each-ref',
+      '--format=%(refname:short)%09%(symref)',
+      'refs/remotes',
+    ])
+    return {
+      branches: lines
+        .filter((line) => !line.startsWith('*'))
+        .map((line) => line.split('\t')[1]),
+      remoteBranches: remoteOutput
+        .split('\n')
+        .filter((line) => line !== '')
+        .map((line) => line.split('\t'))
+        .filter(
+          ([name, symref]) => symref === '' && name !== current.split('\t')[2]
+        )
+        .map(([name]) => name),
+    }
   })
 }
 
@@ -222,8 +239,12 @@ async function perform(git: SimpleGit, action: RepoAction): Promise<void> {
   }
 
   if (action.kind === 'delete-branches') {
-    await git.fetch({ '--prune': null })
-    await git.raw(['branch', '-D', ...action.branches])
+    if (action.branches.length > 0) {
+      await git.raw(['branch', '-D', ...action.branches])
+    }
+    if (action.remoteBranches.length > 0) {
+      await git.raw(['branch', '-r', '-D', ...action.remoteBranches])
+    }
     return
   }
 

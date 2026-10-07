@@ -218,23 +218,24 @@ export function App(props: { root: string; storeDir: string }) {
     const found = await Promise.all(
       targets.map(async (repoPath) => {
         try {
-          return { repoPath, branches: await getOtherBranches(repoPath) }
+          return { repoPath, ...(await getOtherBranches(repoPath)) }
         } catch (error) {
           patchRepo(repoPath, { error: errorMessage(error) })
-          return { repoPath, branches: null }
+          return null
         }
       })
     )
     const deletable = found.flatMap((entry) =>
-      entry.branches !== null && entry.branches.length > 0
-        ? [{ repoPath: entry.repoPath, branches: entry.branches }]
+      entry !== null &&
+      (entry.branches.length > 0 || entry.remoteBranches.length > 0)
+        ? [entry]
         : []
     )
     if (deletable.length === 0) {
       for (const entry of found) {
-        if (entry.branches !== null) {
+        if (entry !== null) {
           patchRepo(entry.repoPath, {
-            error: 'No other local branches to delete',
+            error: 'No other branches to delete',
           })
         }
       }
@@ -244,20 +245,28 @@ export function App(props: { root: string; storeDir: string }) {
       (total, entry) => total + entry.branches.length,
       0
     )
+    const remoteCount = deletable.reduce(
+      (total, entry) => total + entry.remoteBranches.length,
+      0
+    )
     setMode({
       kind: 'confirm',
       choice: 'no',
       danger: true,
       message:
         targets.length === 1
-          ? `Force delete ${count} local branches in ${repoName(props.root, targets[0])}? Unmerged work on them is lost.`
-          : `Force delete ${count} local branches in ${deletable.length} repos? Unmerged work on them is lost.`,
+          ? `Force delete ${count} local branches and ${remoteCount} remote branch copies in ${repoName(props.root, targets[0])}? Unmerged work on them is lost. Nothing on the remote changes.`
+          : `Force delete ${count} local branches and ${remoteCount} remote branch copies in ${deletable.length} repos? Unmerged work on them is lost. Nothing on the remote changes.`,
       list: deletable.flatMap((entry) =>
         targets.length === 1
-          ? entry.branches.map((branch) => `  ${branch}`)
+          ? [...entry.branches, ...entry.remoteBranches].map(
+              (branch) => `  ${branch}`
+            )
           : [
               repoName(props.root, entry.repoPath),
-              ...entry.branches.map((branch) => `  ${branch}`),
+              ...[...entry.branches, ...entry.remoteBranches].map(
+                (branch) => `  ${branch}`
+              ),
             ]
       ),
       onConfirm: () => {
@@ -265,6 +274,7 @@ export function App(props: { root: string; storeDir: string }) {
           void run(entry.repoPath, {
             kind: 'delete-branches',
             branches: entry.branches,
+            remoteBranches: entry.remoteBranches,
           })
         }
       },

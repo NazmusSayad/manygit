@@ -25,7 +25,11 @@ export function getFixes(action: RepoAction, message: string) {
             kind: 'sequence',
             actions: [
               { kind: 'remove-worktree', worktreePath: match[2], force: false },
-              { kind: 'delete-branches', branches: [match[1]] },
+              {
+                kind: 'delete-branches',
+                branches: [match[1]],
+                remoteBranches: [],
+              },
             ],
           },
         },
