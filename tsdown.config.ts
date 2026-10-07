@@ -1,26 +1,23 @@
-import { defineConfig, type Format } from 'tsdown'
+import { defineConfig } from 'tsdown'
 import packageJSON from './package.json' with { type: 'json' }
 
 export default defineConfig({
   entry: {
-    index: './src/index.ts',
+    index: './src/index.tsx',
   },
 
+  format: 'es',
   outDir: './dist',
   tsconfig: './tsconfig.json',
-  format: ['cjs', 'esm'] satisfies Format[],
 
-  dts: true,
-  sourcemap: true,
-
-  target: 'ES6',
+  target: 'ES2022',
   minify: 'dce-only',
+  dts: false,
 
   deps: {
     neverBundle: [
       /node:/gim,
       ...getExternal((packageJSON as any).dependencies),
-      ...getExternal((packageJSON as any).peerDependencies),
     ],
   },
 })

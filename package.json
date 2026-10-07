@@ -2,34 +2,26 @@
   "name": "manygit",
   "version": "0.0.0",
   "sideEffects": false,
+  "type": "module",
   "scripts": {
     "lint": "oxlint .",
     "lint:fix": "oxlint . --fix",
     "typecheck": "tsc --noEmit",
     "typecheck:watch": "tsc --noEmit --watch",
-    "exports": "tsx ./write-exports.ts",
     "build": "tsdown --config ./tsdown.config.ts",
     "dev": "concurrently --names \"R,T\" --prefix-colors \"blue.dim,magenta.dim\" \"tsdown --config ./tsdown.config.ts --watch\" \"tsc --noEmit --watch\"",
-    "start": "tsx --watch ./src/index.ts"
+    "start": "tsx --watch ./src/index.tsx"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
-    }
+  "bin": {
+    "manygit": "dist/index.mjs"
   },
-  "typesVersions": {
-    "*": {
-      ".": [
-        "./dist/index.d.mts",
-        "./dist/index.d.cts"
-      ]
-    }
+  "dependencies": {
+    "ink": "^8.0.0",
+    "react": "^19.3.0"
   },
   "devDependencies": {
     "@types/node": "^25",
+    "@types/react": "^19.3.0",
     "concurrently": "^10",
     "eslint-plugin-check-file": "^3",
     "eslint-plugin-oxfmt": "^0.25.0",
