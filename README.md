@@ -2,6 +2,8 @@
 
 manygit shows all the git repositories in a folder in one terminal screen. You can do git tasks on one repository or on many repositories at the same time.
 
+[![manygit demo](assets/demo.png)](assets/demo.mp4)
+
 - See the branch and the status of each repository.
 - Fetch, pull, push, and change branches in many repositories at the same time.
 - Make commits, pull requests, and releases with text that AI writes. manygit uses [gityo](https://github.com/NazmusSayad/gityo) for this.
