@@ -19,6 +19,7 @@ export function Sidebar(props: {
   repos: Record<string, RepoState>
   cursor: number
   targets: Set<string>
+  marked: Set<string>
   sortMode: SortMode
   width: number
   height: number
@@ -64,7 +65,9 @@ export function Sidebar(props: {
           >
             <Box flexGrow={1} flexShrink={1}>
               <Text wrap="truncate-end">
-                <Text>{isTarget ? '● ' : '○ '}</Text>
+                <Text color={props.marked.has(repoPath) ? 'green' : undefined}>
+                  {isTarget ? '● ' : '○ '}
+                </Text>
                 <Text color="blue" bold={isSelected}>
                   {repoName(props.root, repoPath)}
                 </Text>

@@ -629,6 +629,7 @@ export function App(props: { root: string; storeDir: string }) {
           repos={repos}
           cursor={cursor}
           sortMode={sortMode}
+          marked={marked}
           targets={
             new Set(
               markedPaths.length === 0 && selectedPath !== null
