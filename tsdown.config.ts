@@ -11,7 +11,7 @@ export default defineConfig({
   tsconfig: './tsconfig.json',
 
   target: 'ES2022',
-  minify: 'dce-only',
+  minify: true,
   dts: false,
 
   deps: {
