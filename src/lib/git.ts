@@ -11,6 +11,7 @@ export type RepoAction =
   | { kind: 'pull' }
   | { kind: 'push'; branch: string; setUpstream: boolean }
   | { kind: 'checkout'; branch: string }
+  | { kind: 'checkout-remote'; remoteBranch: string }
   | { kind: 'create-branch'; branch: string }
   | { kind: 'checkout-default' }
   | { kind: 'delete-branches'; branches: string[]; remoteBranches: string[] }
@@ -58,6 +59,7 @@ export type RepoDetails = {
     upstream: string
     track: string
   }[]
+  remoteBranches: string[]
   defaultBranch: string | null
   commits: { hash: string; date: number; message: string; author: string }[]
 }
@@ -142,6 +144,22 @@ export function getDetails(dir: string) {
         }
       })
 
+    const remoteOutput = await git.raw([
+      'for-each-ref',
+      '--format=%(refname)%09%(refname:short)%09%(refname:lstrip=3)',
+      'refs/remotes',
+    ])
+    const remoteBranches = remoteOutput
+      .split('\n')
+      .filter((line) => line !== '')
+      .map((line) => line.split('\t'))
+      .filter(
+        (fields) =>
+          !fields[0].endsWith('/HEAD') &&
+          !branches.some((branch) => branch.name === fields[2])
+      )
+      .map((fields) => fields[1])
+
     const hasHead =
       status.detached || branches.some((branch) => branch.isCurrent)
     const log = hasHead ? await git.log({ maxCount: 10 }) : null
@@ -153,6 +171,7 @@ export function getDetails(dir: string) {
         workingDir: file.working_dir,
       })),
       branches,
+      remoteBranches,
       defaultBranch: await getLocalDefaultBranch(git),
       commits: (log?.all ?? []).map((commit) => ({
         hash: commit.hash.slice(0, 7),
@@ -218,6 +237,11 @@ async function perform(git: SimpleGit, action: RepoAction): Promise<void> {
 
   if (action.kind === 'checkout') {
     await git.checkout(action.branch)
+    return
+  }
+
+  if (action.kind === 'checkout-remote') {
+    await git.raw(['checkout', '--track', action.remoteBranch])
     return
   }
 

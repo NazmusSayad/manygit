@@ -13,6 +13,7 @@ import {
 import { Overview } from './components/overview'
 import { RepoDetailsPane } from './components/repo-details'
 import { Sidebar } from './components/sidebar'
+import type { Config } from './lib/config'
 import { findRepos } from './lib/find-repos'
 import { getFixes, type Issue } from './lib/fixes'
 import { errorMessage, repoName } from './lib/format'
@@ -59,7 +60,7 @@ type Mode =
       value: string
     }
 
-export function App(props: { root: string; storeDir: string }) {
+export function App(props: { root: string; config: Config; storeDir: string }) {
   const app = useApp()
   const windowSize = useWindowSize()
   const [paths, setPaths] = useState<string[] | null>(null)
@@ -133,7 +134,7 @@ export function App(props: { root: string; storeDir: string }) {
 
   useEffect(() => {
     void (async () => {
-      const found = await findRepos(props.root)
+      const found = await findRepos(props.root, props.config)
       setPaths(found)
       setMarked(
         (previous) =>
@@ -144,7 +145,7 @@ export function App(props: { root: string; storeDir: string }) {
       )
       await Promise.all(found.map((repoPath) => run(repoPath, null)))
     })()
-  }, [props.root])
+  }, [props.root, props.config])
 
   useEffect(() => {
     saveSelection(props.storeDir, props.root, marked)
@@ -186,6 +187,7 @@ export function App(props: { root: string; storeDir: string }) {
   const cursor = selectedPath === null ? -1 : sortedPaths.indexOf(selectedPath)
   const selectedDetails = details?.path === selectedPath ? details : null
   const branches = selectedDetails?.data?.branches ?? []
+  const remoteBranches = selectedDetails?.data?.remoteBranches ?? []
   const markedPaths = sortedPaths.filter((repoPath) => marked.has(repoPath))
   const bulkTargets = markedPaths.length > 0 ? markedPaths : sortedPaths
   const commandTargets =
@@ -499,13 +501,20 @@ export function App(props: { root: string; storeDir: string }) {
       if (key.downArrow || input === 'j') {
         setMode({
           kind: 'checkout',
-          cursor: Math.min(branches.length - 1, mode.cursor + 1),
+          cursor: Math.min(
+            branches.length + remoteBranches.length - 1,
+            mode.cursor + 1
+          ),
         })
       }
       if (key.return && selectedPath !== null) {
         const branch = branches[mode.cursor]
+        const remoteBranch = remoteBranches[mode.cursor - branches.length]
         if (branch && !branch.isCurrent) {
           void run(selectedPath, { kind: 'checkout', branch: branch.name })
+        }
+        if (remoteBranch) {
+          void run(selectedPath, { kind: 'checkout-remote', remoteBranch })
         }
         setMode({ kind: 'browse' })
       }
@@ -745,6 +754,7 @@ export function App(props: { root: string; storeDir: string }) {
               root={props.root}
               repoPath={selectedPath}
               branches={branches}
+              remoteBranches={remoteBranches}
               cursor={mode.cursor}
               width={Math.min(64, windowSize.columns - 4)}
               height={windowSize.rows}

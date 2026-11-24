@@ -5,6 +5,7 @@ import { BranchStatus } from './sidebar'
 
 const ACTIVITY_LABELS = {
   checkout: 'checking out…',
+  'checkout-remote': 'checking out…',
   'create-branch': 'creating branch…',
   'checkout-default': 'checking out default branch…',
   'delete-branches': 'deleting branches…',

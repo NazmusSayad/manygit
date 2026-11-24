@@ -38,3 +38,29 @@ jobs:
       - run: pnpm build
       - run: npm publish
       - run: git pull --rebase && git push
+
+  update-schema:
+    needs: publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run json
+
+      - name: Push schema branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B schema
+          git add -f schema.json
+          git commit -m "chore: build JSON schema from ${{ github.event.repository.default_branch }}"
+          git push -f origin schema

@@ -247,16 +247,31 @@ export function CheckoutDialog(props: {
   root: string
   repoPath: string
   branches: RepoDetails['branches']
+  remoteBranches: string[]
   cursor: number
   width: number
   height: number
 }) {
+  const items = [
+    ...props.branches.map((branch) => ({
+      name: branch.name,
+      isCurrent: branch.isCurrent,
+      isRemote: false,
+      track: branch.track,
+    })),
+    ...props.remoteBranches.map((name) => ({
+      name,
+      isCurrent: false,
+      isRemote: true,
+      track: '',
+    })),
+  ]
   const listHeight = Math.max(3, props.height - 12)
   const offset = Math.max(
     0,
     Math.min(
       props.cursor - Math.floor(listHeight / 2),
-      props.branches.length - listHeight
+      items.length - listHeight
     )
   )
 
@@ -267,25 +282,28 @@ export function CheckoutDialog(props: {
       width={props.width}
     >
       <Box flexDirection="column">
-        {props.branches
-          .slice(offset, offset + listHeight)
-          .map((branch, index) => {
-            const isSelected = offset + index === props.cursor
+        {items.slice(offset, offset + listHeight).map((branch, index) => {
+          const isSelected = offset + index === props.cursor
 
-            return (
-              <Box
-                key={branch.name}
-                gap={2}
-                backgroundColor={isSelected ? '#3e4451' : undefined}
+          return (
+            <Box
+              key={`${branch.isRemote}:${branch.name}`}
+              gap={2}
+              backgroundColor={isSelected ? '#3e4451' : undefined}
+            >
+              <Text
+                color={branch.isRemote ? 'blue' : 'yellow'}
+                bold={isSelected}
+                wrap="truncate-end"
               >
-                <Text color="yellow" bold={isSelected} wrap="truncate-end">
-                  {branch.name}
-                </Text>
-                {branch.isCurrent && <Text dimColor>current</Text>}
-                {branch.track && <Text color="cyan">{branch.track}</Text>}
-              </Box>
-            )
-          })}
+                {branch.name}
+              </Text>
+              {branch.isRemote && <Text dimColor>remote</Text>}
+              {branch.isCurrent && <Text dimColor>current</Text>}
+              {branch.track && <Text color="cyan">{branch.track}</Text>}
+            </Box>
+          )
+        })}
       </Box>
     </Dialog>
   )
